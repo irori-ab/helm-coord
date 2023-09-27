@@ -1,0 +1,12 @@
+{
+    "structDir" : "../..",
+    "helm" : {
+        "NAME" : "my-test-release",
+        "version" : "2.0.0-alpha",
+        "kubeconfig" : "~/.kube/config_test"
+    },
+    "params": {
+        "ENV" : "test",
+        "PROFILE" : "small"
+    }
+}
