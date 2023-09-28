@@ -2,8 +2,7 @@
     "structDir" : "../..",
     "helm" : {
         "NAME" : "my-prod-release",
-        "version" : "1.0.0",
-        "kubeconfig" : "~/.kube/config_prod"
+        "version" : "1.0.0"
     },
     "params": {
         "ENV" : "prod",
