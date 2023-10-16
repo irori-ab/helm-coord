@@ -1,0 +1,21 @@
+{
+    "helm" : {
+        "NAME" : ["my-release-", "#ENV"],
+        "CHART" : "../my-chart",
+        "version" : "$VERSION",
+        "namespace" : ["hc-testing-", "#ENV"],
+        "//can-comment-out-keys" : "this-key-val-pair-will-not-be-used",
+        "//kubeconfig" : ["~/.kube/config_", "#ENV"],
+        "create-namespace" : "true",
+        "install" : true
+    },
+    "defaultParams" : {
+        "VERSION" : "1.0.0"
+    },
+    "pathStructure" : "environments/#ENV",
+    "valuesPaths" : [
+        "environments/values.yaml",
+        ["profiles/", "$PROFILE", "/values.yaml"],
+        ["environments/", "#ENV", "/values.yaml"]
+    ]
+}

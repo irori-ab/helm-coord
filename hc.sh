@@ -3,30 +3,45 @@
 set -e
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
+COORD_DEPTH="${1}"
+shift
 COORD_DIR="${1:-.}"
 shift 
 
 COORD_PATH="${COORD_DIR}/helm.coord.json"
+if [[ -f "$COORD_PATH" ]]; then
+    COORD_JSON=$(cat "$COORD_PATH")
+else
+    COORD_JSON="{}"
+fi
+ABS_COORD_DIR=$(cd "${COORD_DIR}" && pwd)
 
-q () {
-  jq ".$1" -r "${COORD_PATH}" 
-}
+# resolve struct dir with coord path and depth
+ABS_STRUCT_DIR="$(cd "${COORD_DIR}"; for i in $(seq $COORD_DEPTH); do cd ..; done; pwd)"
 
-STRUCT_DIR=$(q "structDir")
-STRUCT_PATH="${COORD_DIR}/${STRUCT_DIR}/helm.struct.jq"
+ABS_STRUCT_PATH="${ABS_STRUCT_DIR}/helm.struct.json"
+STRUCT_JSON=""
+if [[ -f "$ABS_STRUCT_PATH" ]]; then
+    STRUCT_JSON="$(cat "$ABS_STRUCT_PATH")"
+else
+    echo "No struct file found at depth -$COORD_DEPTH: $ABS_STRUCT_PATH"
+    exit 1
+fi
 
-# use struct file as a basic templating engine with data from coord file
-# flatten arrays for "helm" object values, and "valuesPaths" array items
-FILTERED="$(jq -f "$STRUCT_PATH" "$COORD_PATH" \
-  | jq '.helm |= with_entries({ "key": .key, "value": [.value] | flatten | join("") })' \
-  | jq '.valuesPaths = [.valuesPaths[] | [.] | flatten | join("")]')"
+COORD=$(jq -n --arg absCoordDir "${ABS_COORD_DIR}" --arg absStructDir "${ABS_STRUCT_DIR}" \
+  '$ARGS.named.absCoordDir[($ARGS.named.absStructDir | length):]' -r | sed 's#^/##g')
 
-# merge two files via slurp, stdin (filtered helm struct) and coord file, latter overriding former
-MERGED="$(echo "$FILTERED" | jq -s '.[0] * .[1]' - ${COORD_PATH} )"
+PATH_VARS="$(echo "$STRUCT_JSON" | jq --arg coord "${COORD}" 'include "./resolve_path_params";  .pathStructure as $pathStructure | $coord | resolve_path_params($pathStructure)')"
+
+FILTERED="$(jq -n \
+  --argjson structFile "$STRUCT_JSON" \
+  --argjson coordFile "${COORD_JSON}" \
+  --argjson pathVars "${PATH_VARS}" \
+  -f merge_filter_placeholders.jq  )"
 
 ## get helm positional argument (or for lookup)
 h_arg () {
-  echo "$MERGED" \
+  echo "$FILTERED" \
     | jq -r ".helm[\"$1\"]"
 }
 
@@ -71,6 +86,10 @@ hc_helm_command() {
         helm_command="diff $1" # e.g. helm diff upgrade
         shift
     fi 
+    if [[ "$helm_command" == "dependency" ]] ; then
+        helm_command="dependency $1" # e.g. helm diff upgrade
+        shift
+    fi 
     case "$helm_command" in
         "install" | "template" | "upgrade" | "diff upgrade" ) 
         echo helm $helm_command \
@@ -82,6 +101,8 @@ hc_helm_command() {
             $(h_flag_1 "create-namespace" "$helm_command" "^upgrade$|^install$") \
             $(h_flag_1 "install" "$helm_command" "upgrade") \
             $VALUES_ARGS $@ ;;
+        "dependency build" )
+         echo helm $helm_command $(h_arg "CHART") $@ ;;
         "list" )
          echo helm $helm_command $(h_flag "kubeconfig") $(h_flag "namespace") $@ ;;
         "status" )
@@ -93,16 +114,16 @@ hc_helm_command() {
 case "$hc_command" in
     "helm" ) 
       # change directory to resolve relative chart folders
-      echo cd "${COORD_DIR}/${STRUCT_DIR}"
+      echo cd "${ABS_STRUCT_DIR}"
       hc_helm_command $@ ;;
     "helm-exec" )
       CMD="$(hc_helm_command $@)"
       # change directory to resolve relative chart folders
-      (cd "${COORD_DIR}/${STRUCT_DIR}" && exec $CMD ) ;;
+      (cd "${ABS_STRUCT_DIR}" && exec $CMD ) ;;
     "diff-coord" )
       COORD_DIR_2="$1"
-      ${SCRIPT_PATH}/hc.sh "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
-      ${SCRIPT_PATH}/hc.sh "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
+      ${SCRIPT_PATH}/hc.sh $COORD_DEPTH "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
+      ${SCRIPT_PATH}/hc.sh $COORD_DEPTH "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
       diff /tmp/hc-diff-a.out /tmp/hc-diff-b.out
       ;;
     *) echo >&2 "Unsupported hc.sh command: $hc_command"; exit 1;;

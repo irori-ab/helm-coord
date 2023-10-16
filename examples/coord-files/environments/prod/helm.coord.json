@@ -1,9 +1,5 @@
 {
     "structDir" : "../..",
-    "helm" : {
-        "NAME" : "my-prod-release",
-        "version" : "1.0.0"
-    },
     "params": {
         "ENV" : "prod",
         "PROFILE" : "medium"

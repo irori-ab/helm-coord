@@ -1,0 +1,8 @@
+{
+    "structDir" : "../..",
+    "params": {
+        "ENV" : "test",
+        "PROFILE" : "small",
+        "VERSION": "2.0.0-alpha"
+    }
+}
