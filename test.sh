@@ -35,4 +35,7 @@ echo '"dude"'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars
 ./hc.sh 2 examples/path-params/environments/prod helm-exec template
 ./hc.sh 2 examples/path-params/environments/test helm-exec template
 
-./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod
+#  diff returns non-zero exit code on normal operation
+# => check for something we know should be in output
+./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod | \
+  grep "<   replicas: 2"
