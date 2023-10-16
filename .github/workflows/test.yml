@@ -5,8 +5,8 @@ on:
 jobs:
   test-script:
     runs-on: ubuntu-latest
+    container: dtzar/helm-kubectl:3.13.0
     steps:
-      - name: test script
-        uses: docker://dtzar/helm-kubectl:3.13.0
-        with:
-            args: ./test.sh
+      - uses: actions/checkout@v3
+
+      - run: ./test.sh
