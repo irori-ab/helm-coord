@@ -38,4 +38,4 @@ echo '"dude"'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars
 #  diff returns non-zero exit code on normal operation
 # => check for something we know should be in output
 ./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod | \
-  grep "<   replicas: 2"
+  grep "replicas: 2"
