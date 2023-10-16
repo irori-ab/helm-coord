@@ -1,0 +1,12 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+jobs:
+  test-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test script
+        uses: docker://dtzar/helm-kubectl:3.13.0
+        with:
+            args: echo dude
