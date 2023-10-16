@@ -1,9 +1,29 @@
 # helm-coordinates
 
-## Goal
-* All information needed to do a Helm deployment in a specific environment should be uniquely determined from a specification folder -- the **helm coordinate file**
-* The structure of helm deployments should be documented in a single file -- the **helm structure file**
+A Helm wrapper script that simplifies working with multiple deployments of the same Helm chart according to an implicit structure.
 
+
+## Goals
+1. All information needed to do a Helm deployment in a specific environment should be uniquely determined from a specification folder -- the coordinate.
+2. Operate as close as possible to Helm abstractions, command names and argument terminology.
+
+## Concepts
+
+* **coordinate path**: a filesystem path to a directory that will uniquely allow us to infer parameters needed to construct a Helm command invocation. 
+  * Example: `some/path/to/my/coordinate` 
+* **coordinate**: The actual coordinate is the relative path between the *Helm structure file* and the supplied *coordinate path*. 
+  * Example: `my/coordinate`
+* **Helm structure file**: A file that defines how to use inferred parameters  to construct Helm command invocations.
+  * Example location: `some/path/to/helm.struct.json` 
+* **path structure**: A pattern to match to a *coordinate*
+  to infer path parameters.
+  * Example: `"my/#coordinate_name"`
+    * gives the parameter `coordinate_name="coordinate"` with the above example
+* **Helm coordinate file**: An optional file that can specify parameters that cannot be inferred from the *coordinate* 
+  * Example location: `some/path/to/my/coordinate/helm.coord.json` 
+* **coordinate depth**: the path depth of the coordinate. This is useful when invoking the tool from an arbitrary working directory.
+  * Example: 2 (for the above coordinate)
+  
 ## Pre-requisites
 
 * CLI tools
@@ -11,32 +31,33 @@
   * JQ
   * helm (duh)
 * Files
-  * `helm.struct.jq`
+  * `helm.struct.json`
     * at some common location, maybe repo root
   * `my/helm/coordinate/helm.coord.json`
     * at each deployment specification folder
+    * **note**: optional if only using `pathStructure` inferred parameters
 
 ## Usage 
 
-`./hc.sh PATH/TO/COORD/DIR helm HELM_COMMAND`
+`./hc.sh COORD_DEPTH COORD_PATH helm HELM_COMMAND`
 
 This will output a Helm command per the Helm coordinate file, and its referenced Helm structure file.
 
 Example: 
-  * `./hc.sh environment/prod helm install`
+  * `./hc.sh 2 my/folder/environment/prod helm install`
   * Output (note `cd` commands needed to resolve relative chart paths): 
-   ```
-   cd ...
-   helm install ...
-   ```
+    ```
+    cd ...
+    helm install ...
+    ```
 
 To actually execute the helm command as well:
 
-* `./hc.sh PATH/TO/COORD/DIR helm-exec HELM_COMMAND`
+* `./hc.sh COORD_DEPTH COORD_PATH helm-exec HELM_COMMAND`
 
 Example:
 
-* `./hc.sh environment/prod helm-exec install`
+* `./hc.sh 2 my/folder/environment/prod helm-exec install`
 
 ## Supported Helm commands
 
@@ -56,31 +77,33 @@ chart into two namespaces.
 
 ```
 # inspect the helm structure file in the example
-# - notice how we use placeholders both for helm arguments and values file paths
-# - notice how we bring in a separate profile values file based on a placeholder
-cat examples/helm.struct.jq
+# - we use placeholders both for helm arguments and values file paths
+# - path inferred parameters start with '#'
+# - Helm coordinate file parameters start with '$'
+cat examples/coord-files/helm.struct.json
+# inspect how we specify the Helm coordinate file parameters 
+cat examples/coord-files/environments/prod/helm.coord.json
+cat examples/coord-files/environments/test/helm.coord.json
 
-# inspect how the two helm coordinate files set the params for the placeholders
-# - notice that each file needs to specify a correct relative path to the struct file
-# - notice how the 'params' define data available for struct placeholders
-# - notice how the 'helm' values can override the ones specified in the struct file
-cat examples/environments/prod/helm.coord.json
-cat examples/environments/test/helm.coord.json
-
-# inspect the prod template command
-./hc.sh examples/environments/prod helm template
-# inspect the test template command
-./hc.sh examples/environments/prod helm template
-# the names of the 'helm' struct section arguments should correspond well to the helm help output
+# infer the prod template command (2 is the coordinate depth)
+./hc.sh 2 examples/coord-files/environments/prod helm template
+# infer the test template command
+./hc.sh 2 examples/coord-files/environments/prod helm template
+# the names of the 'helm' struct section arguments should correspond well to the Helm command help output
 # 'helm template -h'
 
-# actually inspect the output from template execution
-./hc.sh examples/environments/prod helm-exec template
-./hc.sh examples/environments/test helm-exec template
+# you can append any Helm arguments at the end
+./hc.sh 2 examples/coord-files/environments/prod helm template --set replicaCount=10
 
-# if you are satisfied, and dare to ;) then lets install these
-./hc.sh examples/environments/prod helm-exec install
-./hc.sh examples/environments/test helm-exec install
+# actually inspect the output from template execution
+./hc.sh 2 examples/coord-files/environments/prod helm-exec template
+./hc.sh 2 examples/coord-files/environments/test helm-exec template
+
+
+
+# if you are satisfied, and dare to ;) then lets install these (will use your default kubeconfig)
+./hc.sh 2 examples/coord-files/environments/prod helm-exec install
+./hc.sh 2 examples/coord-files/environments/test helm-exec install
 
 # inspect the result
 helm list -n hc-testing-prod
@@ -89,20 +112,17 @@ helm list -n hc-testing-test
 kubectl get pods -n hc-testing-test
 
 # diff the template output from two coordinates
-./hc.sh examples/environments/test diff-coord examples/environments/prod
+./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod
 
 # install Helm diff to try diffing a installed release
 # see installation instructions: https://github.com/databus23/helm-diff
 
 # modify some values (here replicas)
-sed -I.tmp 's/3/5/g' examples/environments/prod/values.yaml
-sed -I.tmp 's/2/3/g' examples/environments/test/values.yaml
+sed -I.tmp 's/3/5/g' examples/coord-files/environments/prod/values.yaml
+sed -I.tmp 's/2/3/g' examples/coord-files/environments/test/values.yaml
 # inspect the would be diffs
-./hc.sh examples/environments/prod helm-exec diff upgrade
-./hc.sh examples/environments/test helm-exec diff upgrade
-# cleanup
-rm examples/environments/prod/values.yaml.tmp
-rm examples/environments/test/values.yaml.tmp
+./hc.sh 2 examples/coord-files/environments/prod helm-exec diff upgrade
+./hc.sh 2 examples/coord-files/environments/test helm-exec diff upgrade
 ```
 
 Congratulations! You are now a fully fledged Helm coordinate navigator!
@@ -110,12 +130,12 @@ Congratulations! You are now a fully fledged Helm coordinate navigator!
 Go forth and see how complex Helm structures you can create that break this script,
 or at the very least challenge your co-workers understanding of your spider web of deployments!
 
-## Example
+## Examples
 See chart and folder setup under `examples/`.
 
 Example output:
 ```
-> ./hc.sh examples/environments/prod helm template
+> ./hc.sh 2 examples/environments/prod helm template
 cd examples/environments/prod/../..
 helm template my-prod-release my-chart --kubeconfig ~/.kube/config_prod --version 1.0.0 -f profiles/medium/values.yaml -f environments/prod/values.yaml
 > ./hc.sh examples/environments/test helm template
@@ -128,9 +148,14 @@ helm template my-test-release my-chart --kubeconfig ~/.kube/config_test --versio
 * [x] Actually testing it
 * [x] Solve reasonably safe exec of commands
 * [ ] Implement more flags and helm commands
+* [ ] Simple testing mechanism
 * [x] Allow templating helm args also
 * [x] Diffing between coordinate and cluster (via helm diff plugin)
 * [x] Write tutorial
+* [x] default path params
+* [ ] all commands, globbing
+* [ ] CI usage
+* [ ] CODEOWNER flows
 * [ ] Fix reasonable shellcheck warnings
 * [x] Diffing between coordinates
 * [ ] Diffing between coordinates in other git references
