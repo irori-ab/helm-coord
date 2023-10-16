@@ -9,4 +9,4 @@ jobs:
       - name: test script
         uses: docker://dtzar/helm-kubectl:3.13.0
         with:
-            args: ls && ./test.sh
+            args: ./test.sh
