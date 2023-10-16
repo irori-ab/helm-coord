@@ -148,7 +148,7 @@ helm template my-test-release my-chart --kubeconfig ~/.kube/config_test --versio
 * [x] Actually testing it
 * [x] Solve reasonably safe exec of commands
 * [ ] Implement more flags and helm commands
-* [ ] Simple testing mechanism
+* [x] Simple testing mechanism, with github actions
 * [x] Allow templating helm args also
 * [x] Diffing between coordinate and cluster (via helm diff plugin)
 * [x] Write tutorial
@@ -159,3 +159,4 @@ helm template my-test-release my-chart --kubeconfig ~/.kube/config_test --versio
 * [ ] Fix reasonable shellcheck warnings
 * [x] Diffing between coordinates
 * [ ] Diffing between coordinates in other git references
+* [ ] Generate ArgoCD Application files
