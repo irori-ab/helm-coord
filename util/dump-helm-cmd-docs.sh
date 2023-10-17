@@ -37,7 +37,8 @@ do
 done
 
 MAIN_CMD="diff"
-CMDS="$(helm $MAIN_CMD -h | awk '/Available Commands/,NR<0' | egrep -o "^  [a-z]+" | grep -v helm | xargs echo)"
+# optional, ignore error code
+CMDS="$( (helm $MAIN_CMD -h || true) | awk '/Available Commands/,NR<0' | egrep -o "^  [a-z]+" | grep -v helm | xargs echo)"
 for cmd in $CMDS
 do
   helm $MAIN_CMD $cmd -h | dump_args "$MAIN_CMD $cmd" >> /tmp/helm-$HELM_VERSION-cmd-args.jsonl
