@@ -36,14 +36,14 @@ do
   helm $cmd -h | dump_pos_args $cmd  >> /tmp/helm-$HELM_VERSION-cmd-pos-args.jsonl
 done
 
-MAIN_CMD="diff"
+#MAIN_CMD="diff"
 # optional, ignore error code
-CMDS="$( (helm $MAIN_CMD -h || true) | awk '/Available Commands/,NR<0' | egrep -o "^  [a-z]+" | grep -v helm | xargs echo)"
-for cmd in $CMDS
-do
-  helm $MAIN_CMD $cmd -h | dump_args "$MAIN_CMD $cmd" >> /tmp/helm-$HELM_VERSION-cmd-args.jsonl
-  helm $MAIN_CMD $cmd -h | dump_pos_args "$MAIN_CMD $cmd"  >> /tmp/helm-$HELM_VERSION-cmd-pos-args.jsonl
-done
+#CMDS="$( (helm $MAIN_CMD -h || true) | awk '/Available Commands/,NR<0' | egrep -o "^  [a-z]+" | grep -v helm | xargs echo)"
+#for cmd in $CMDS
+#do
+#  helm $MAIN_CMD $cmd -h | dump_args "$MAIN_CMD $cmd" >> /tmp/helm-$HELM_VERSION-cmd-args.jsonl
+#  helm $MAIN_CMD $cmd -h | dump_pos_args "$MAIN_CMD $cmd"  >> /tmp/helm-$HELM_VERSION-cmd-pos-args.jsonl
+#done
 
 MAIN_CMD="dependency"
 CMDS="$(helm $MAIN_CMD -h | awk '/Available Commands/,NR<0' | egrep -o "^  [a-z]+" | grep -v helm | xargs echo)"
