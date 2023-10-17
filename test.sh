@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
+${SCRIPT_PATH}/util/dump-helm-cmd-docs.sh
 
 jq -n 'include "./resolve_path_params";  "environment/prod" | resolve_path_params("environment/#ENV")'
 

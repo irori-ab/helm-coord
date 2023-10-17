@@ -39,41 +39,16 @@ FILTERED="$(jq -n \
   --argjson pathVars "${PATH_VARS}" \
   -f merge_filter_placeholders.jq  )"
 
-## get helm positional argument (or for lookup)
-h_arg () {
-  echo "$FILTERED" \
-    | jq -r ".helm[\"$1\"]"
-}
-
-## get helm named argument, e.g. --my-arg my-val
-h_flag () {
-    FLAG="$1"
-    VAL="$(h_arg "$FLAG")"
-    if [[ "$VAL" != "null" ]]; then
-      echo "--$FLAG $VAL"
-    fi 
-}
-
-## get helm named argument with no value
-h_flag_1 () {
-    FLAG="$1"
-    COMMAND="${2:-}"
-    COMMAND_ONLY_WHEN_REGEX="${3:-.*}"
-
-    echo "$COMMAND" | egrep -q "$COMMAND_ONLY_WHEN_REGEX" || return
-
-    VAL="$(h_arg "$FLAG")"
-    if [[ -n "$VAL" ]]; then # or compare to 'true'?
-      echo "--$FLAG"
-    fi 
+helm_args() {
+  cmd="$1"
+  CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
+  cat ~/.helm-coord/cmd-args.json | jq -r -f helm-args.jq --arg cmd "$cmd" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$FILTERED"
 }
 
 ## merge all values file "templated arrays" into string paths, output as helm -f arguments
 VALUES_ARGS=$(echo "$FILTERED" \
   | jq '.valuesPaths[]' \
   | xargs -n 1 echo -n " -f")
-
-# 
 
 hc_command="$1";
 shift 
@@ -90,25 +65,12 @@ hc_helm_command() {
         helm_command="dependency $1" # e.g. helm diff upgrade
         shift
     fi 
-    case "$helm_command" in
-        "install" | "template" | "upgrade" | "diff upgrade" ) 
-        echo helm $helm_command \
-            $(h_arg "NAME") \
-            $(h_arg "CHART") \
-            $(h_flag "kubeconfig") \
-            $(h_flag "namespace") \
-            $(h_flag "version") \
-            $(h_flag_1 "create-namespace" "$helm_command" "^upgrade$|^install$") \
-            $(h_flag_1 "install" "$helm_command" "upgrade") \
-            $VALUES_ARGS $@ ;;
-        "dependency build" )
-         echo helm $helm_command $(h_arg "CHART") $@ ;;
-        "list" )
-         echo helm $helm_command $(h_flag "kubeconfig") $(h_flag "namespace") $@ ;;
-        "status" )
-         echo helm $helm_command $(h_flag "kubeconfig") $(h_flag "namespace") $(h_arg "NAME") $@ ;;
-        *) echo >&2 "Unsupported hc.sh helm command: $helm_command"; exit 1;;
-    esac
+    # only $VALUES_ARGS if cmd has  --values flag (-f)
+    HAS_VALUES="$(cat ~/.helm-coord/cmd-args.json | jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)')"
+    if [[ "$HAS_VALUES" == "false" ]]; then
+      VALUES_ARGS=""
+    fi
+    echo helm $helm_command $(helm_args $helm_command) $VALUES_ARGS $@
 } 
 
 case "$hc_command" in
