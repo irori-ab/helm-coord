@@ -17,7 +17,7 @@ fi
 ABS_COORD_DIR=$(cd "${COORD_DIR}" && pwd)
 
 # resolve struct dir with coord path and depth
-ABS_STRUCT_DIR="$(cd "${COORD_DIR}"; for i in $(seq $COORD_DEPTH); do cd ..; done; pwd)"
+ABS_STRUCT_DIR="$(cd "${COORD_DIR}"; for _ in $(seq "$COORD_DEPTH"); do cd ..; done; pwd)"
 
 ABS_STRUCT_PATH="${ABS_STRUCT_DIR}/helm.struct.json"
 STRUCT_JSON=""
@@ -31,18 +31,20 @@ fi
 COORD=$(jq -n --arg absCoordDir "${ABS_COORD_DIR}" --arg absStructDir "${ABS_STRUCT_DIR}" \
   '$ARGS.named.absCoordDir[($ARGS.named.absStructDir | length):]' -r | sed 's#^/##g')
 
-PATH_VARS="$(echo "$STRUCT_JSON" | jq --arg coord "${COORD}" 'include "./resolve_path_params";  .pathStructure as $pathStructure | $coord | resolve_path_params($pathStructure)')"
+PATH_VARS="$(echo "$STRUCT_JSON" | jq --arg coord "${COORD}" "-L${SCRIPT_PATH}/" 'include "./resolve_path_params";  .pathStructure as $pathStructure | $coord | resolve_path_params($pathStructure)')"
 
 FILTERED="$(jq -n \
   --argjson structFile "$STRUCT_JSON" \
   --argjson coordFile "${COORD_JSON}" \
   --argjson pathVars "${PATH_VARS}" \
-  -f merge_filter_placeholders.jq  )"
+  -f "${SCRIPT_PATH}/merge_filter_placeholders.jq"  )"
 
 helm_args() {
   cmd="$1"
   CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
-  cat ~/.helm-coord/cmd-args.json | jq -r -f helm-args.jq --arg cmd "$cmd" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$FILTERED"
+  jq -r "-L${SCRIPT_PATH}/" -f "${SCRIPT_PATH}/helm-args.jq" --arg cmd "$cmd" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$FILTERED" \
+    < ~/.helm-coord/cmd-args.json
+    
 }
 
 ## merge all values file "templated arrays" into string paths, output as helm -f arguments
@@ -66,11 +68,11 @@ hc_helm_command() {
         shift
     fi 
     # only $VALUES_ARGS if cmd has  --values flag (-f)
-    HAS_VALUES="$(cat ~/.helm-coord/cmd-args.json | jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)')"
+    HAS_VALUES="$( jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)' ~/.helm-coord/cmd-args.json)"
     if [[ "$HAS_VALUES" == "false" ]]; then
       VALUES_ARGS=""
     fi
-    echo helm $helm_command $(helm_args $helm_command) $VALUES_ARGS $@
+    echo "helm $helm_command $(helm_args "${helm_command}") $VALUES_ARGS $*"
 } 
 
 case "$hc_command" in
@@ -84,8 +86,8 @@ case "$hc_command" in
       (cd "${ABS_STRUCT_DIR}" && exec $CMD ) ;;
     "diff-coord" )
       COORD_DIR_2="$1"
-      ${SCRIPT_PATH}/hc.sh $COORD_DEPTH "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
-      ${SCRIPT_PATH}/hc.sh $COORD_DEPTH "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
+      "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
+      "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
       diff /tmp/hc-diff-a.out /tmp/hc-diff-b.out
       ;;
     *) echo >&2 "Unsupported hc.sh command: $hc_command"; exit 1;;
