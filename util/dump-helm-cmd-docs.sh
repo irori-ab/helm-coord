@@ -70,10 +70,19 @@ done
 
 # TODO: subcommand parse
 
+CMD_POS_ARG_FIXES=$(cat << EOF
+{
+    "repo add" : ["REPO_NAME"],
+    "repo remove" : ["REPO_NAME"]
+}
+EOF
+)
+
 mkdir -p ~/.helm-coord
  jq -s '[.[] | to_entries] | flatten | reduce .[] as $x ({}; .[$x.key] |= (. // []) + [$x.value])' \
    < /tmp/helm-"$HELM_VERSION"-cmd-args.jsonl \
    > ~/.helm-coord/cmd-args.json
- jq -s '[.[] | split(";")] | [ .[] | { "key" : .[0], "value" : .[1] | split(" ") | map(.[1:length-1])}] | from_entries' \
+ jq -s --argjson fixes "$CMD_POS_ARG_FIXES" \
+   '[.[] | split(";")] | [ .[] | { "key" : .[0], "value" : .[1] | split(" ") | map(.[1:length-1])}] | from_entries as $parsed | $parsed * $fixes' \
    < /tmp/helm-"$HELM_VERSION"-cmd-pos-args.jsonl \
    > ~/.helm-coord/cmd-pos-args.json

@@ -79,8 +79,13 @@ case "$hc_command" in
     "helm" ) 
       # change directory to resolve relative chart folders
       echo cd "${ABS_STRUCT_DIR}"
+
+      # I think we want glob expansion here
+      # shellcheck disable=SC2068
       hc_helm_command $@ ;;
     "helm-exec" )
+      # I think we want glob expansion here
+      # shellcheck disable=SC2068
       CMD="$(hc_helm_command $@)"
       # change directory to resolve relative chart folders
       (cd "${ABS_STRUCT_DIR}" && exec $CMD ) ;;

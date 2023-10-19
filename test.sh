@@ -2,7 +2,7 @@
 
 set -e
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
-cd $SCRIPT_PATH
+cd "$SCRIPT_PATH"
 
 # run to populate helm cmd args cache files
 ./util/dump-helm-cmd-docs.sh
@@ -20,10 +20,12 @@ VARS=$(cat << EOF
         "d" : "param-d."
     }
 }
-EOF)
+EOF
+)
 
 echo "$VARS"
 
+# shellcheck disable=SC2016
 echo '["a.", "b.", "#c", "$d", "e.", "#f"]'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars)'
 echo '"dude"'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars)'
 
