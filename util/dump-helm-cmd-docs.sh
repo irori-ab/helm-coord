@@ -72,7 +72,7 @@ done
 
 CMD_POS_ARG_FIXES=$(cat << EOF
 {
-    "repo add" : ["REPO_NAME"],
+    "repo add" : ["REPO_NAME", "URL"],
     "repo remove" : ["REPO_NAME"]
 }
 EOF

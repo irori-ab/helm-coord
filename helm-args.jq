@@ -1,6 +1,6 @@
 # $cmdPosArgs: positional arguments, per command 
 . as $cmdArgs # applicable commands per --argument
-| $struct.helm | [to_entries[] | select(.key | test("^[A-Z]+$"))] | from_entries as $positionalArgs
+| $struct.helm | [to_entries[] | select(.key | test("^[A-Z_]+$"))] | from_entries as $positionalArgs
 | $struct.helm | [to_entries[] | select(.key | test("^[a-z-]+$"))] | from_entries as $flagArgs
 #with_entries( select(any($cmdArgs[.key][]; . == $cmd)))
 | $cmdPosArgs[$cmd] // [] | map($positionalArgs[.]) as $posArgValues

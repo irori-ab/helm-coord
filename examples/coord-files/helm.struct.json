@@ -1,6 +1,8 @@
 {
     "helm" : {
         "NAME" : ["my-release-", "#ENV"],
+        "REPO_NAME" : "fluent",
+        "URL" : "https://fluent.github.io/helm-charts",
         "CHART" : "../my-chart",
         "version" : "$VERSION",
         "namespace" : ["hc-testing-", "#ENV"],

@@ -59,14 +59,12 @@ hc_helm_command() {
     helm_command="$1";
     shift
 
-    if [[ "$helm_command" == "diff" ]] ; then
-        helm_command="diff $1" # e.g. helm diff upgrade
+    IS_SUBCOMMAND="$(jq --arg cmd "$helm_command $1" 'has($cmd)' ~/.helm-coord/cmd-pos-args.json)"
+    if [[ "$IS_SUBCOMMAND" == "true" ]] ; then
+        helm_command="$helm_command $1" # e.g. helm diff upgrade
         shift
     fi 
-    if [[ "$helm_command" == "dependency" ]] ; then
-        helm_command="dependency $1" # e.g. helm diff upgrade
-        shift
-    fi 
+
     # only $VALUES_ARGS if cmd has  --values flag (-f)
     HAS_VALUES="$( jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)' ~/.helm-coord/cmd-args.json)"
     if [[ "$HAS_VALUES" == "false" ]]; then
