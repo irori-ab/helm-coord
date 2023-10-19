@@ -33,7 +33,7 @@ COORD=$(jq -n --arg absCoordDir "${ABS_COORD_DIR}" --arg absStructDir "${ABS_STR
 
 PATH_VARS="$(echo "$STRUCT_JSON" | jq --arg coord "${COORD}" "-L${SCRIPT_PATH}/" 'include "./resolve_path_params";  .pathStructure as $pathStructure | $coord | resolve_path_params($pathStructure)')"
 
-FILTERED="$(jq -n \
+FILTERED="$(jq -n "-L${SCRIPT_PATH}/" \
   --argjson structFile "$STRUCT_JSON" \
   --argjson coordFile "${COORD_JSON}" \
   --argjson pathVars "${PATH_VARS}" \
