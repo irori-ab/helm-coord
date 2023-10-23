@@ -12,7 +12,7 @@ function dump_args() {
 
 function dump_pos_args() {
     cmd="$1"
-    POS_ARGS="$(grep -A 1 "Usage:" | grep -o -E '\[[A-Z]+\]' | xargs echo)"
+    POS_ARGS="$(grep -A 1 "Usage:" | tail -n 1 | tr -d '[' | tr  -d ']' | grep -o -E '[A-Z_]+' | xargs echo)"
     if [[ "$POS_ARGS" != "" ]]; then
         echo "\"$cmd;$POS_ARGS\""
     fi 
@@ -27,7 +27,7 @@ rm -f ~/.helm-coord/cmd-args.json
 rm -f ~/.helm-coord/cmd-pos-args.json
 
 CMDS="$(helm -h | grep -o -E "^  [a-z]+" | grep -v helm | xargs echo)"
-#CMDS=repo
+#CMDS=status
 
 for cmd in $CMDS
 do
@@ -73,7 +73,8 @@ done
 CMD_POS_ARG_FIXES=$(cat << EOF
 {
     "repo add" : ["REPO_NAME", "URL"],
-    "repo remove" : ["REPO_NAME"]
+    "repo remove" : ["REPO_NAME"],
+    "create" : ["CHART_NAME"]
 }
 EOF
 )
@@ -83,6 +84,6 @@ mkdir -p ~/.helm-coord
    < /tmp/helm-"$HELM_VERSION"-cmd-args.jsonl \
    > ~/.helm-coord/cmd-args.json
  jq -s --argjson fixes "$CMD_POS_ARG_FIXES" \
-   '[.[] | split(";")] | [ .[] | { "key" : .[0], "value" : .[1] | split(" ") | map(.[1:length-1])}] | from_entries as $parsed | $parsed * $fixes' \
+   '[.[] | split(";")] | [ .[] | { "key" : .[0], "value" : .[1] | split(" ")}] | from_entries as $parsed | $parsed * $fixes' \
    < /tmp/helm-"$HELM_VERSION"-cmd-pos-args.jsonl \
    > ~/.helm-coord/cmd-pos-args.json
