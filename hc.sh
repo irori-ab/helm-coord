@@ -3,10 +3,32 @@
 set -e
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
-COORD_DEPTH="${1}"
-shift
-COORD_DIR="${1:-.}"
-shift 
+if echo $1 | grep -E "^[0-9]+$" > /dev/null ; then
+  COORD_DEPTH="${1}"
+  shift
+  COORD_DIR="${1}"
+  shift 
+else 
+  # assume struct dir is current
+  # assume depth is depth of coord argument
+  COORD_DIR="${1}"
+  shift 
+  if [ ! -f "helm.struct.json" ]; then
+    >&2 echo "ERROR: No 'helm.struct.json' found in current directory."
+    >&2 echo "To run hc.sh against an arbitrary path, you need to supply a numerical DEPTH argument, example:"
+    >&2 echo "hc.sh 2 my/long/path/environment/prod helm template"
+    >&2 echo 
+    >&2 echo "This is equivalent to:"
+    >&2 echo "cd my/long/path"
+    >&2 echo "hc.sh environment/prod helm template"
+    
+    exit 1
+  else
+    COORD_DEPTH="$(($(echo "$COORD_DIR" | grep -o -E "./." | wc -l)+1))"
+  fi
+fi 
+
+
 
 COORD_PATH="${COORD_DIR}/helm.coord.json"
 if [[ -f "$COORD_PATH" ]]; then
