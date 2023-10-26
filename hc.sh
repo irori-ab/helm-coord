@@ -3,7 +3,7 @@
 set -e
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
-if echo $1 | grep -E "^[0-9]+$" > /dev/null ; then
+if echo "$1" | grep -E "^[0-9]+$" > /dev/null ; then
   COORD_DEPTH="${1}"
   shift
   COORD_DIR="${1}"
