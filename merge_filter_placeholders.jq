@@ -9,4 +9,4 @@ $structFile
     "paramVars" : ( ($structFile.defaultParams // {}) * ($coordFile.params // {}) )
 } as $vars
 | .helm |= with_entries( { "key": .key , "value": .value | join_vars($vars)})
-| .valuesPaths |= map(. | join_vars($vars))
+| .["--values"] |= map(. | join_vars($vars))

@@ -2,6 +2,8 @@
 
 A Helm wrapper script that simplifies working with multiple deployments of the same Helm chart according to an implicit structure.
 
+![helm coordinates overview](/docs/overview.png)
+
 
 ## Goals
 1. All information needed to do a Helm deployment in a specific environment should be uniquely determined from a specification folder -- the coordinate.

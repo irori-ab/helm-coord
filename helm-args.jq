@@ -10,6 +10,6 @@
     | $positionalArgs[$arg] 
     | if (. == null) then error("missing required argument in struct 'helm' section: " + $arg ) else . end
 ) as $posArgValues
-| $flagArgs | with_entries( select(any($cmdArgs[.key][]; . == $cmd))) as $flagArgValues
+| $flagArgs | with_entries( select(any(($cmdArgs[.key[2:]] // [])[]; . == $cmd))) as $flagArgValues
 #TODO fix ugly hack to guess single argument flags
-| [$posArgValues[], ($flagArgValues | to_entries[] | if .value == "true" then "--" + .key else "--" + .key + " " + .value end) ] | join(" ")
+| [$posArgValues[], ($flagArgValues | to_entries[] | if .value == "true" then .key else .key + " " + .value end) ] | join(" ")

@@ -1,0 +1,19 @@
+{
+    "helm" : {
+      "NAME" : ["my-fluent-release-", "#ENV"],
+      "CHART" : "fluentd",
+      "--repo" : "https://fluent.github.io/helm-charts",
+      "--version" : "$VERSION",
+      "--namespace" : ["logging-", "#ENV"],
+      "--kubeconfig" : ["~/.kube/config_", "#ENV"]
+    },
+    "pathStructure" : "environments/#ENV",
+    "defaultParams" : {
+      "VERSION" : "0.4.4"
+    },
+    "--values" : [
+      "environments/default.yaml",
+      ["environments/", "#ENV", "/values.yaml"]
+    ]
+  }
+  

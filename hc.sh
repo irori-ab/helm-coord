@@ -49,7 +49,7 @@ helm_args() {
 
 ## merge all values file "templated arrays" into string paths, output as helm -f arguments
 VALUES_ARGS=$(echo "$FILTERED" \
-  | jq '.valuesPaths[]' \
+  | jq '.["--values"][]' \
   | xargs -n 1 echo -n " -f")
 
 hc_command="$1";
