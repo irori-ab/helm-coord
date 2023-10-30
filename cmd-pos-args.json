@@ -1,0 +1,120 @@
+{
+  "create": [
+    "CHART_NAME"
+  ],
+  "dependency build": [
+    "CHART"
+  ],
+  "dependency list": [
+    "CHART"
+  ],
+  "dependency update": [
+    "CHART"
+  ],
+  "diff release": [
+    "RELEASE"
+  ],
+  "diff revision": [
+    "RELEASE",
+    "REVISION",
+    "REVISION"
+  ],
+  "diff rollback": [
+    "RELEASE",
+    "REVISION"
+  ],
+  "diff upgrade": [
+    "RELEASE",
+    "CHART"
+  ],
+  "get all": [
+    "RELEASE_NAME"
+  ],
+  "get hooks": [
+    "RELEASE_NAME"
+  ],
+  "get manifest": [
+    "RELEASE_NAME"
+  ],
+  "get metadata": [
+    "RELEASE_NAME"
+  ],
+  "get notes": [
+    "RELEASE_NAME"
+  ],
+  "get values": [
+    "RELEASE_NAME"
+  ],
+  "history": [
+    "RELEASE_NAME"
+  ],
+  "install": [
+    "NAME",
+    "CHART"
+  ],
+  "lint": [
+    "PATH"
+  ],
+  "package": [
+    "CHART_PATH"
+  ],
+  "pull": [
+    "URL"
+  ],
+  "repo add": [
+    "REPO_NAME",
+    "URL"
+  ],
+  "repo index": [
+    "DIR"
+  ],
+  "repo remove": [
+    "REPO_NAME"
+  ],
+  "repo update": [
+    "REPO",
+    "REPO"
+  ],
+  "rollback": [
+    "RELEASE",
+    "REVISION"
+  ],
+  "search hub": [
+    "KEYWORD"
+  ],
+  "show all": [
+    "CHART"
+  ],
+  "show chart": [
+    "CHART"
+  ],
+  "show crds": [
+    "CHART"
+  ],
+  "show readme": [
+    "CHART"
+  ],
+  "show values": [
+    "CHART"
+  ],
+  "status": [
+    "RELEASE_NAME"
+  ],
+  "template": [
+    "NAME",
+    "CHART"
+  ],
+  "test": [
+    "RELEASE"
+  ],
+  "uninstall": [
+    "RELEASE_NAME"
+  ],
+  "upgrade": [
+    "RELEASE",
+    "CHART"
+  ],
+  "verify": [
+    "PATH"
+  ]
+}

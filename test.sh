@@ -7,6 +7,24 @@ cd "$SCRIPT_PATH"
 # run to populate helm cmd args cache files
 ./util/dump-helm-cmd-docs.sh
 
+CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
+
+STRUCT=$(cat << EOF
+{
+    "helm" : {
+        "REPO_NAME" : "myRepo",
+        "URL" : "myUrl"
+    }
+}
+EOF
+)
+jq -r "-L${SCRIPT_PATH}/" -f "${SCRIPT_PATH}/helm-args.jq" --arg cmd "repo add" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$STRUCT" \
+    < ~/.helm-coord/cmd-args.json | \
+  grep "myRepo myUrl"
+
+# wipe to test rest with default argument definitions
+rm -rf ~/.helm-coord
+
 jq -n 'include "./resolve_path_params";  "environment/prod" | resolve_path_params("environment/#ENV")'
 
 
@@ -58,17 +76,3 @@ popd
 ./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod | \
   grep "replicas: 2"
 
-CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
-
-STRUCT=$(cat << EOF
-{
-    "helm" : {
-        "REPO_NAME" : "myRepo",
-        "URL" : "myUrl"
-    }
-}
-EOF
-)
-jq -r "-L${SCRIPT_PATH}/" -f "${SCRIPT_PATH}/helm-args.jq" --arg cmd "repo add" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$STRUCT" \
-    < ~/.helm-coord/cmd-args.json | \
-  grep "myRepo myUrl"

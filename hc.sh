@@ -28,7 +28,17 @@ else
   fi
 fi 
 
+CMD_POS_ARGS_FILE="$HOME/.helm-coord/cmd-pos-args.json"
+if [[ ! -f "$CMD_POS_ARGS_FILE" ]]; then 
+  # using default positional argument definitions
+  CMD_POS_ARGS_FILE="$SCRIPT_PATH/cmd-pos-args.json"
+fi 
 
+CMD_ARGS_FILE="$HOME/.helm-coord/cmd-args.json"
+if [[ ! -f "$CMD_ARGS_FILE" ]]; then 
+  # using default argument definitions
+  CMD_ARGS_FILE="$SCRIPT_PATH/cmd-args.json"
+fi 
 
 COORD_PATH="${COORD_DIR}/helm.coord.json"
 if [[ -f "$COORD_PATH" ]]; then
@@ -50,6 +60,14 @@ else
     exit 1
 fi
 
+PATH_STRUCT="$(echo "$STRUCT_JSON" | jq '.pathStructure' )"
+PATH_STRUCT_DEPTH="$(( $(echo "$PATH_STRUCT" |  grep -o -E "./." | wc -l) + 1 ))"
+if [[ "$COORD_DEPTH" != "$PATH_STRUCT_DEPTH" ]]; then
+  echo "Error: path structure in helm.struct.json expected depth: $PATH_STRUCT_DEPTH (found $COORD_DEPTH)"
+  exit 1
+fi
+
+
 COORD=$(jq -n --arg absCoordDir "${ABS_COORD_DIR}" --arg absStructDir "${ABS_STRUCT_DIR}" \
   '$ARGS.named.absCoordDir[($ARGS.named.absStructDir | length):]' -r | sed 's#^/##g')
 
@@ -63,9 +81,9 @@ FILTERED="$(jq -n "-L${SCRIPT_PATH}/" \
 
 helm_args() {
   cmd="$1"
-  CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
+  CMD_POS_ARGS="$(cat "$CMD_POS_ARGS_FILE")"
   jq -r "-L${SCRIPT_PATH}/" -f "${SCRIPT_PATH}/helm-args.jq" --arg cmd "$cmd" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$FILTERED" \
-    < ~/.helm-coord/cmd-args.json
+    < "$CMD_ARGS_FILE"
     
 }
 
@@ -81,14 +99,14 @@ hc_helm_command() {
     helm_command="$1";
     shift
 
-    IS_SUBCOMMAND="$(jq --arg cmd "$helm_command $1" 'has($cmd)' ~/.helm-coord/cmd-pos-args.json)"
+    IS_SUBCOMMAND="$(jq --arg cmd "$helm_command $1" 'has($cmd)' "$CMD_POS_ARGS_FILE")"
     if [[ "$IS_SUBCOMMAND" == "true" ]] ; then
         helm_command="$helm_command $1" # e.g. helm diff upgrade
         shift
     fi 
 
     # only $VALUES_ARGS if cmd has  --values flag (-f)
-    HAS_VALUES="$( jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)' ~/.helm-coord/cmd-args.json)"
+    HAS_VALUES="$( jq --arg cmd "$helm_command" 'any(.values[]; . == $cmd)' $CMD_ARGS_FILE)"
     if [[ "$HAS_VALUES" == "false" ]]; then
       VALUES_ARGS=""
     fi
