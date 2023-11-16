@@ -7,7 +7,8 @@
         "--version" : "$VERSION",
         "--namespace" : ["hc-testing-", "#ENV"],
         "//can-comment-out-keys" : "this-key-val-pair-will-not-be-used",
-        "//kubeconfig" : ["~/.kube/config_", "#ENV"],
+        "//--kubeconfig" : ["~/.kube/config_", "#ENV"],
+        "--set" : "kubefolderValue=~/.kube/someFile",
         "--create-namespace" : "true",
         "--install" : true
     },

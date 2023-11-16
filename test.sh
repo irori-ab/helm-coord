@@ -44,8 +44,8 @@ EOF
 echo "$VARS"
 
 # shellcheck disable=SC2016
-echo '["a.", "b.", "#c", "$d", "e.", "#f"]'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars)'
-echo '"dude"'  | jq --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars)'
+echo '["a.", "b.", "#c", "$d", "e.", "#f", "~"]'  | jq --arg HOME "home" --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars;$HOME)'
+echo '"dude"'  | jq --arg HOME "home" --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars;$HOME)'
 
 ./hc.sh 2 examples/coord-files/environments/prod helm template
 ./hc.sh 2 examples/coord-files/environments/test helm template

@@ -77,6 +77,7 @@ FILTERED="$(jq -n "-L${SCRIPT_PATH}/" \
   --argjson structFile "$STRUCT_JSON" \
   --argjson coordFile "${COORD_JSON}" \
   --argjson pathVars "${PATH_VARS}" \
+  --arg HOME "${HOME}" \
   -f "${SCRIPT_PATH}/merge_filter_placeholders.jq"  )"
 
 helm_args() {
@@ -132,6 +133,11 @@ case "$hc_command" in
       "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
       "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
       diff /tmp/hc-diff-a.out /tmp/hc-diff-b.out
+      ;;
+    "add-to-path-command" )
+      # TODO: fix to have easier invoke, now requires a valid coordinate, e.g.
+      # hc.sh 2 examples/path-params/environments/prod add-to-path-command
+      echo "echo \"export PATH=\$PATH:$SCRIPT_PATH >> ~/.bashrc\""
       ;;
     *) echo >&2 "Unsupported hc.sh command: $hc_command"; exit 1;;
 esac
