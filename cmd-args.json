@@ -632,6 +632,7 @@
     "dependency build",
     "dependency list",
     "dependency update",
+    "diff upgrade",
     "env",
     "get all",
     "get hooks",
