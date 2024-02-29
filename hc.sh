@@ -7,8 +7,34 @@ SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 mode="printcmd"
 
 print_usage () {
-  echo "Usage:
-  echo "$0 TODO USAGE"
+  echo "Helm coordinates"
+  echo 
+  echo "Template you Helm command invocations based on the 'coordinate' (i.e. path) "
+  echo "of your config. See: https://github.com/irori-ab/helm-coord"
+  echo
+  echo "Usage:"
+  echo " - Print the generated Helm invocation"
+  echo "$(basename "$0") COORD [-d COORD_DEPTH] [--] HELM_COMMAND ...HELM_ARGUMENTS"
+  echo " - Execute the generated Helm invocation"
+  echo "$(basename "$0") COORD [-d COORD_DEPTH] --exec [--] HELM_COMMAND ...HELM_ARGUMENTS"
+  echo " - Diff the template output between two coordinates"
+  echo "$(basename "$0") [-d COORD_DEPTH] --diff COORD1 COORD2"
+  echo 
+  echo "Option reference:"
+  echo "-h --help             Print this help text"
+  echo "-e --exec             Execute the generated Helm command invocation (default is print)"
+  echo "-d --depth DEPTH      Specify the coordinate depth, when not invoking hc.sh from the "
+  echo "                      same location as the 'helm.struct.json'"
+  echo "--add-to-path         Print commands to add hc.sh to bashrc"
+  echo "--diff C1 C2          Diff template output between coordinates C1 and C2"
+  echo "-p --coord-path COORD Specify the coordinate via a flag. Resolves some"
+  echo "                      argument parsing ambiguity for path starting with '-'"
+  echo 
+  echo "Examples:"
+  echo "hc.sh -d 2 examples/coord-files/environments/prod template"
+  echo "hc.sh -d 2 examples/coord-files/environments/prod --exec template"
+  echo "cd examples/coord-files && hc.sh environments/prod template"
+
 }
 
 while [[ $# > 0 ]]
