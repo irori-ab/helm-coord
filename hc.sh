@@ -6,12 +6,17 @@ SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 mode="printcmd"
 
+print_usage () {
+  echo "Usage:
+  echo "$0 TODO USAGE"
+}
+
 while [[ $# > 0 ]]
 do
   case "$1" in
   ## non-short-circuiting commands
   -h|--help)
-    echo "usage: $0 TODO USAGE"
+    print_usage
     exit 0
     ;;
   -e|--exec)
@@ -44,10 +49,15 @@ do
     shift # flag
     shift # value
     ;;
-
+  --)
+    # stops helm coord arg parsing
+    break
+    ;;
   -*|--*)
     >&2 echo "Error: unknown helm coord option: $1"
     >&2 echo "Make sure you specify helm coordinate options before the coordinate directory"
+    >&2 echo
+    print_usage 
     shift
     exit 1
     ;;
