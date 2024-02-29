@@ -1,22 +1,77 @@
 #!/bin/bash
 
-set -e
-SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
+set -e -o pipefail
 
-if echo "$1" | grep -E "^[0-9]+$" > /dev/null ; then
-  COORD_DEPTH="${1}"
-  shift
-  COORD_DIR="${1}"
-  shift 
-else 
+SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+mode="printcmd"
+
+while [[ $# > 0 ]]
+do
+  case "$1" in
+  ## non-short-circuiting commands
+  -h|--help)
+    echo "usage: $0 TODO USAGE"
+    exit 0
+    ;;
+  -e|--exec)
+    mode="exec"
+    shift # flag 
+    ;;
+  -d|--depth)
+    COORD_DEPTH="$2"
+    shift # flag
+    shift # value
+    ;;
+  --add-to-path)
+    echo "echo \"export PATH=\$PATH:$SCRIPT_PATH >> ~/.bashrc\""
+    shift # flag
+    ;;
+  ## short-circuiting commands
+  --diff)
+    mode="diff"
+    COORD_DIR="$2"
+    COORD_DIR_2="$3"
+    shift # flag
+    shift # value 1
+    shift # value 2
+    break
+    ;;
+
+  -p|--coord-path)
+    # allows to specify COORD_DIR starting with "-"
+    COORD_DIR="$2"
+    shift # flag
+    shift # value
+    ;;
+
+  -*|--*)
+    >&2 echo "Error: unknown helm coord option: $1"
+    >&2 echo "Make sure you specify helm coordinate options before the coordinate directory"
+    shift
+    exit 1
+    ;;
+
+  *)
+    if [[ "$COORD_DIR" == "" ]]; then
+      COORD_DIR="$1"
+      shift # value
+    else
+      # assume this and remaining are helm command/arguments
+      break 
+    fi 
+    ;;
+  esac 
+done
+
+if [[ "$COORD_DEPTH" == "" ]] ; then
   # assume struct dir is current
   # assume depth is depth of coord argument
-  COORD_DIR="${1}"
-  shift 
+
   if [ ! -f "helm.struct.json" ]; then
     >&2 echo "ERROR: No 'helm.struct.json' found in current directory."
-    >&2 echo "To run hc.sh against an arbitrary path, you need to supply a numerical DEPTH argument, example:"
-    >&2 echo "hc.sh 2 my/long/path/environment/prod helm template"
+    >&2 echo "To run hc.sh against an arbitrary path, you need to supply a numerical '-d DEPTH' argument, example:"
+    >&2 echo "hc.sh -d 2 my/long/path/environment/prod template"
     >&2 echo 
     >&2 echo "This is equivalent to:"
     >&2 echo "cd my/long/path"
@@ -26,7 +81,7 @@ else
   else
     COORD_DEPTH="$(($(echo "$COORD_DIR" | grep -o -E "./." | wc -l)+1))"
   fi
-fi 
+fi
 
 CMD_POS_ARGS_FILE="$HOME/.helm-coord/cmd-pos-args.json"
 if [[ ! -f "$CMD_POS_ARGS_FILE" ]]; then 
@@ -67,7 +122,6 @@ if [[ "$COORD_DEPTH" != "$PATH_STRUCT_DEPTH" ]]; then
   exit 1
 fi
 
-
 COORD=$(jq -n --arg absCoordDir "${ABS_COORD_DIR}" --arg absStructDir "${ABS_STRUCT_DIR}" \
   '$ARGS.named.absCoordDir[($ARGS.named.absStructDir | length):]' -r | sed 's#^/##g')
 
@@ -85,16 +139,12 @@ helm_args() {
   CMD_POS_ARGS="$(cat "$CMD_POS_ARGS_FILE")"
   jq -r "-L${SCRIPT_PATH}/" -f "${SCRIPT_PATH}/helm-args.jq" --arg cmd "$cmd" --argjson cmdPosArgs "$CMD_POS_ARGS" --argjson struct "$FILTERED" \
     < "$CMD_ARGS_FILE"
-    
 }
 
 ## merge all values file "templated arrays" into string paths, output as helm -f arguments
 VALUES_ARGS=$(echo "$FILTERED" \
   | jq '.["--values"][]' \
   | xargs -n 1 echo -n " -f")
-
-hc_command="$1";
-shift 
 
 hc_helm_command() {
     helm_command="$1";
@@ -114,32 +164,29 @@ hc_helm_command() {
     echo "helm $helm_command $(helm_args "${helm_command}") $VALUES_ARGS $*"
 } 
 
-case "$hc_command" in
-    "helm" ) 
+echo "helm-coord mode: $mode"
+case "$mode" in
+    printcmd) 
       # change directory to resolve relative chart folders
       echo cd "${ABS_STRUCT_DIR}"
 
       # I think we want glob expansion here
       # shellcheck disable=SC2068
-      hc_helm_command $@ ;;
-    "helm-exec" )
+      hc_helm_command $@
+      ;;
+    exec)
       # I think we want glob expansion here
       # shellcheck disable=SC2068
       CMD="$(hc_helm_command $@)"
       # change directory to resolve relative chart folders
-      (cd "${ABS_STRUCT_DIR}" && exec $CMD ) ;;
-    "diff-coord" )
-      COORD_DIR_2="$1"
-      "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR}" helm-exec template > /tmp/hc-diff-a.out
-      "${SCRIPT_PATH}/hc.sh" "${COORD_DEPTH}" "${COORD_DIR_2}" helm-exec template > /tmp/hc-diff-b.out
+      (cd "${ABS_STRUCT_DIR}" && exec $CMD )
+      ;;
+    diff)
+      "${SCRIPT_PATH}/hc.sh" -d "${COORD_DEPTH}" "${COORD_DIR}" -e template > /tmp/hc-diff-a.out
+      "${SCRIPT_PATH}/hc.sh" -d "${COORD_DEPTH}" "${COORD_DIR_2}" -e template > /tmp/hc-diff-b.out
       diff /tmp/hc-diff-a.out /tmp/hc-diff-b.out
       ;;
-    "add-to-path-command" )
-      # TODO: fix to have easier invoke, now requires a valid coordinate, e.g.
-      # hc.sh 2 examples/path-params/environments/prod add-to-path-command
-      echo "echo \"export PATH=\$PATH:$SCRIPT_PATH >> ~/.bashrc\""
-      ;;
-    *) echo >&2 "Unsupported hc.sh command: $hc_command"; exit 1;;
+    *) echo >&2 "Unsupported hc.sh mode: $mode"; exit 1;;
 esac
 
 

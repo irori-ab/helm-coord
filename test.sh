@@ -4,7 +4,7 @@ set -e
 SCRIPT_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 cd "$SCRIPT_PATH"
 
-# run to populate helm cmd args cache files
+# run to populate cmd args cache files
 ./util/dump-helm-cmd-docs.sh
 
 CMD_POS_ARGS="$(cat ~/.helm-coord/cmd-pos-args.json)"
@@ -47,32 +47,32 @@ echo "$VARS"
 echo '["a.", "b.", "#c", "$d", "e.", "#f", "~"]'  | jq --arg HOME "home" --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars;$HOME)'
 echo '"dude"'  | jq --arg HOME "home" --argjson vars "$VARS" 'include "./join_vars"; . | join_vars($vars;$HOME)'
 
-./hc.sh 2 examples/coord-files/environments/prod helm template
-./hc.sh 2 examples/coord-files/environments/test helm template
+./hc.sh -d 2 examples/coord-files/environments/prod template
+./hc.sh -d 2 examples/coord-files/environments/test template
 
-./hc.sh 2 examples/coord-files/environments/prod helm-exec template
-./hc.sh 2 examples/coord-files/environments/test helm-exec template
+./hc.sh -d 2 examples/coord-files/environments/prod  -e template
+./hc.sh -d 2 examples/coord-files/environments/test  -e template
 
 
-./hc.sh 2 examples/path-params/environments/prod helm template
-./hc.sh 2 examples/path-params/environments/test helm template
+./hc.sh -d 2 examples/path-params/environments/prod template
+./hc.sh -d 2 examples/path-params/environments/test template
 
-./hc.sh 2 examples/path-params/environments/prod helm-exec template
-./hc.sh 2 examples/path-params/environments/test helm-exec template
+./hc.sh -d 2 examples/path-params/environments/prod  -e template
+./hc.sh -d 2 examples/path-params/environments/test  -e template
 
-./hc.sh 2 examples/fluentd/environments/prod helm template
-./hc.sh 2 examples/fluentd/environments/stage helm template
+./hc.sh -d 2 examples/fluentd/environments/prod template
+./hc.sh -d 2 examples/fluentd/environments/stage template
 
-./hc.sh 2 examples/fluentd/environments/prod helm-exec template
-./hc.sh 2 examples/fluentd/environments/stage helm-exec template
+./hc.sh -d 2 examples/fluentd/environments/prod  -e template
+./hc.sh -d 2 examples/fluentd/environments/stage  -e template
 
 pushd examples/fluentd/
-../../hc.sh environments/stage helm template
+../../hc.sh environments/stage template
 popd
 
 
 #  diff returns non-zero exit code on normal operation
 # => check for something we know should be in output
-./hc.sh 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod | \
+./hc.sh -d 2 --diff examples/coord-files/environments/test examples/coord-files/environments/prod | \
   grep "replicas: 2"
 
