@@ -7,33 +7,62 @@ SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 mode="printcmd"
 
 print_usage () {
-  echo "Helm coordinates"
+  echo "hc.sh: Helm coordinates"
   echo 
   echo "Template you Helm command invocations based on the 'coordinate' (i.e. path) "
-  echo "of your config. See: https://github.com/irori-ab/helm-coord"
+  echo "of your config. Define your rules in a 'helm.struct.json' file. "
+  echo "See brief description in the section HELM STRUCTURE FILE below, and read more at: "
+  echo "https://github.com/irori-ab/helm-coord"
   echo
-  echo "Usage:"
-  echo " - Print the generated Helm invocation"
-  echo "$(basename "$0") COORD [-d COORD_DEPTH] [--] HELM_COMMAND ...HELM_ARGUMENTS"
-  echo " - Execute the generated Helm invocation"
-  echo "$(basename "$0") COORD [-d COORD_DEPTH] --exec [--] HELM_COMMAND ...HELM_ARGUMENTS"
-  echo " - Diff the template output between two coordinates"
-  echo "$(basename "$0") [-d COORD_DEPTH] --diff COORD1 COORD2"
+  echo "USAGE"
+  echo "  Print the generated Helm invocation:"
+  echo "  $(basename "$0") COORD [-d COORD_DEPTH] [--] HELM_COMMAND ...HELM_ARGUMENTS"
   echo 
-  echo "Option reference:"
-  echo "-h --help             Print this help text"
-  echo "-e --exec             Execute the generated Helm command invocation (default is print)"
-  echo "-d --depth DEPTH      Specify the coordinate depth, when not invoking hc.sh from the "
-  echo "                      same location as the 'helm.struct.json'"
-  echo "--add-to-path         Print commands to add hc.sh to bashrc"
-  echo "--diff C1 C2          Diff template output between coordinates C1 and C2"
-  echo "-p --coord-path COORD Specify the coordinate via a flag. Resolves some"
-  echo "                      argument parsing ambiguity for path starting with '-'"
+  echo "  Execute the generated Helm invocation:"
+  echo "  $(basename "$0") COORD [-d COORD_DEPTH] --exec [--] HELM_COMMAND ...HELM_ARGUMENTS"
+  echo
+  echo "  Diff the template output between two coordinates:"
+  echo "  $(basename "$0") [-d COORD_DEPTH] --diff COORD1 COORD2"
   echo 
-  echo "Examples:"
-  echo "hc.sh -d 2 examples/coord-files/environments/prod template"
-  echo "hc.sh -d 2 examples/coord-files/environments/prod --exec template"
-  echo "cd examples/coord-files && hc.sh environments/prod template"
+  echo "OPTIONS"
+  echo "  -h --help             Print this help text"
+  echo "  -e --exec             Execute the generated Helm command invocation (default is print)"
+  echo "  -d --depth DEPTH      Specify the coordinate depth, when not invoking hc.sh from the "
+  echo "                        same location as the 'helm.struct.json'"
+  echo "  --add-to-path         Print commands to add hc.sh to bashrc"
+  echo "  --diff C1 C2          Diff template output between coordinates C1 and C2"
+  echo "  -p --coord-path COORD Specify the coordinate via a flag. Resolves some"
+  echo "                        argument parsing ambiguity for path starting with '-'"
+  echo 
+  echo "EXAMPLES"
+  echo "  hc.sh -d 2 examples/coord-files/environments/prod template"
+  echo "  hc.sh -d 2 examples/coord-files/environments/prod --exec template"
+  echo "  cd examples/coord-files && hc.sh environments/prod template"
+  echo 
+  echo "HELM STRUCTURE FILE"
+  echo "  Place a file named 'helm.struct.json' at the root of your coordinate folders:"
+  echo '  {'
+  echo '      "helm" : {'
+  echo '          "NAME" : ["my-release-", "#ENV"], // maps to positional argument NAME'
+  echo '                                            // uses path variable #ENV'
+  echo '                                            // concatenates parts to value'
+  echo '          "--version" : "$VERSION",         // maps to flag argument --version'
+  echo '                                            // uses default parameter $VERSION'
+  echo '      },'
+  echo '      "defaultParams" : {'
+  echo '          "VERSION" : "1.0.0"               // defines default parameter value'
+  echo '                                            // can be overridden in coordinate'
+  echo '                                            // specific file helm.coord.json'
+  echo '      },'
+  echo '      "pathStructure" : "environments/#ENV",// defines how to map coordinate'
+  echo '                                            // to path variables'
+  echo
+  echo '      "--values" : [                        // defines where to look for '
+  echo '                                            // Helm values files, per coordinate'
+  echo '          "environments/values.yaml",'
+  echo '          ["environments/", "#ENV", "/values.yaml"]'
+  echo '      ]'
+  echo '  }'
 
 }
 
@@ -58,6 +87,12 @@ do
     echo "echo \"export PATH=\$PATH:$SCRIPT_PATH >> ~/.bashrc\""
     shift # flag
     ;;
+  -p|--coord-path)
+    # allows to specify COORD_DIR starting with "-"
+    COORD_DIR="$2"
+    shift # flag
+    shift # value
+    ;;
   ## short-circuiting commands
   --diff)
     mode="diff"
@@ -67,13 +102,6 @@ do
     shift # value 1
     shift # value 2
     break
-    ;;
-
-  -p|--coord-path)
-    # allows to specify COORD_DIR starting with "-"
-    COORD_DIR="$2"
-    shift # flag
-    shift # value
     ;;
   --)
     # stops helm coord arg parsing

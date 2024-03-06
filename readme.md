@@ -1,9 +1,8 @@
-# helm-coordinates
+# helm-coordinates (hc.sh)
 
 A Helm wrapper script that simplifies working with multiple deployments of the same Helm chart according to an implicit structure.
 
 ![helm coordinates overview](/docs/overview.png)
-
 
 ## Goals
 1. All information needed to do a Helm deployment in a specific environment should be uniquely determined from a specification folder -- the coordinate.
@@ -41,7 +40,7 @@ A Helm wrapper script that simplifies working with multiple deployments of the s
 
 ## Usage 
 
-`./hc.sh COORD_DEPTH COORD_PATH helm HELM_COMMAND`
+`./hc.sh [-d COORD_DEPTH] COORD_PATH helm HELM_COMMAND HELM_ARGUMENTS...`
 
 This will output a Helm command per the Helm coordinate file, and its referenced Helm structure file.
 
@@ -55,22 +54,11 @@ Example:
 
 To actually execute the helm command as well:
 
-* `./hc.sh COORD_DEPTH COORD_PATH helm-exec HELM_COMMAND`
+* `./hc.sh -d COORD_DEPTH COORD_PATH helm-exec HELM_COMMAND HELM_ARGUMENTS...`
 
 Example:
 
 * `./hc.sh -d 2 my/folder/environment/prod -e install`
-
-## Supported Helm commands
-
-* `template`
-* `install`
-* `upgrade`
-* `diff upgrade` (with Helm diff plugin)
-* `status`
-* `list` (list in same namespace as coord)
-
-Note: not all arguments are passed on for each command. Should be easy to modify the script if you need more though.
 
 ## Tutorial
 Assumes you have a working default kubeconfig. Will install the example 
@@ -100,7 +88,6 @@ cat examples/coord-files/environments/test/helm.coord.json
 # actually inspect the output from template execution
 ./hc.sh -d 2 examples/coord-files/environments/prod -e template
 ./hc.sh -d 2 examples/coord-files/environments/test -e template
-
 
 
 # if you are satisfied, and dare to ;) then lets install these (will use your default kubeconfig)
@@ -144,6 +131,19 @@ helm template my-prod-release my-chart --kubeconfig ~/.kube/config_prod --versio
 cd examples/environments/test/../..
 helm template my-test-release my-chart --kubeconfig ~/.kube/config_test --version 2.0.0-alpha -f profiles/small/values.yaml -f environments/test/values.yaml
 ```
+
+## Supported Helm commands
+
+Almost all Helm commands should be supported. The valid arguments and flags per Helm subcommand
+and subcommands have automatically "scraped" from `helm ... -h` output, and
+stored along the script in two files:
+
+*  `cmd-args.json`: Which optional flag (e.g. `--help`) is applicable for what list of commands/subcommands 
+*  `cmd-pos-args.json`: Which positional argument (e.g. `RELEASE_NAME`) is applicaple for what list of commands/subcommands
+
+You can override these files by placing your own copies in:
+* `$HOME/.helm-coord/cmd-args.json`
+* `$HOME/.helm-coord/cmd-pos-args.json`
 
 ## Future work
 
