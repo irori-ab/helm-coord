@@ -39,6 +39,12 @@ print_usage () {
   echo "  hc.sh -d 2 examples/coord-files/environments/prod --exec template"
   echo "  cd examples/coord-files && hc.sh environments/prod template"
   echo 
+  echo "COORDINATES"
+  echo "  A coordinate is a path relative to the 'helm.struct.json' file, which is"
+  echo "  used to parse out path variables based on the 'pathStructure' field in"
+  echo "  the 'helm.struct.json'. These variables can then be used to template "
+  echo "  arguments to Helm command invocations."
+  echo 
   echo "HELM STRUCTURE FILE"
   echo "  Place a file named 'helm.struct.json' at the root of your coordinate folders:"
   echo '  {'
