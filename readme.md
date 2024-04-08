@@ -45,12 +45,12 @@ A Helm wrapper script that simplifies working with multiple deployments of the s
 
 ## Usage 
 
-`./hc.sh [-d COORD_DEPTH] COORD_PATH helm HELM_COMMAND HELM_ARGUMENTS...`
+`./hc.sh [-d COORD_DEPTH] COORD_PATH HELM_COMMAND HELM_ARGUMENTS...`
 
 This will output a Helm command per the Helm coordinate file, and its referenced Helm structure file.
 
 Example: 
-  * `./hc.sh -d 2 my/folder/environment/prod helm install`
+  * `./hc.sh -d 2 my/folder/environment/prod install`
   * Output (note `cd` commands needed to resolve relative chart paths): 
     ```
     cd ...
@@ -59,7 +59,7 @@ Example:
 
 To actually execute the helm command as well:
 
-* `./hc.sh -d COORD_DEPTH COORD_PATH helm-exec HELM_COMMAND HELM_ARGUMENTS...`
+* `./hc.sh -d COORD_DEPTH COORD_PATH -e HELM_COMMAND HELM_ARGUMENTS...`
 
 Example:
 
@@ -115,8 +115,8 @@ kubectl get pods -n hc-testing-test
 sed -I.tmp 's/3/5/g' examples/coord-files/environments/prod/values.yaml
 sed -I.tmp 's/2/3/g' examples/coord-files/environments/test/values.yaml
 # inspect the would be diffs
-./hc.sh -d 2 examples/coord-files/environments/prod helm-exec diff upgrade
-./hc.sh -d 2 examples/coord-files/environments/test helm-exec diff upgrade
+./hc.sh -d 2 examples/coord-files/environments/prod -e diff upgrade
+./hc.sh -d 2 examples/coord-files/environments/test -e diff upgrade
 ```
 
 Congratulations! You are now a fully fledged Helm coordinate navigator!
