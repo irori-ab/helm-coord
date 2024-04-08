@@ -4,7 +4,12 @@ A Helm wrapper script that simplifies working with multiple deployments of the s
 
 ![helm coordinates overview](/docs/overview.png)
 
+## Demo
+
+[![asciicast](https://asciinema.org/a/UIooyQjgEFSTXwdNC3eFjHgvl.svg)](https://asciinema.org/a/UIooyQjgEFSTXwdNC3eFjHgvl)
+
 ## Goals
+
 1. All information needed to do a Helm deployment in a specific environment should be uniquely determined from a specification folder -- the coordinate.
 2. Operate as close as possible to Helm abstractions, command names and argument terminology.
 
