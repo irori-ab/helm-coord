@@ -1,0 +1,13 @@
+site:
+  title: Default title 
+  content: Default content
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: web.example.com
+

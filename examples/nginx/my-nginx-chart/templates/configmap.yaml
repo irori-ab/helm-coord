@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ .Release.Name }}
+  name: {{ .Release.Name }}
+data:
+  index.html: |
+    <html>
+    <body>
+      <h1>{{ .Values.site.content }}</h1>
+      <p>{{ .Values.site.title }}</p>
+    </body>
+    </html>

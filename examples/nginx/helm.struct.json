@@ -1,0 +1,18 @@
+{
+    "helm" : {
+        "NAME" : ["my-nginx-", "#env", "-", "#instance"],
+        "CHART" : "$CHART",
+        "--namespace" : ["nginx-", "#env"],
+        "--create-namespace" : "true",
+        "--install" : "true"
+    },
+    "defaultParams" : {
+        "CHART" : "./my-nginx-chart"
+    },
+    "pathStructure" : "environments/#env/#instance",
+    "--values" : [
+        "environments/defaults.yaml",
+        ["environments/", "#env", "/", "#env", "-defaults.yaml"],
+        ["environments/", "#env", "/", "#instance", "/values.yaml"]
+    ]
+}
