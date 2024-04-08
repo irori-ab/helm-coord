@@ -29,7 +29,7 @@ print_usage () {
   echo "  -e --exec             Execute the generated Helm command invocation (default is print)"
   echo "  -d --depth DEPTH      Specify the coordinate depth, when not invoking hc.sh from the "
   echo "                        same location as the 'helm.struct.json'"
-  echo "  --add-to-path         Print commands to add hc.sh to bashrc"
+  echo "  --add-to-path-cmd     Print commands to add hc.sh to bashrc"
   echo "  --diff C1 C2          Diff template output between coordinates C1 and C2"
   echo "  -p --coord-path COORD Specify the coordinate via a flag. Resolves some"
   echo "                        argument parsing ambiguity for path starting with '-'"
@@ -89,9 +89,16 @@ do
     shift # flag
     shift # value
     ;;
-  --add-to-path)
-    echo "echo \"export PATH=\$PATH:$SCRIPT_PATH >> ~/.bashrc\""
+  --add-to-path-cmd)
     shift # flag
+    echo "# Bash"
+    echo "echo 'export PATH=\"\$PATH:$SCRIPT_PATH\"' >> ~/.bashrc"
+    echo "source ~/.bashrc"
+    echo 
+    echo "# ZSH"
+    echo "echo 'export PATH=\"\$PATH:$SCRIPT_PATH\"' >> ~/.zshrc"
+    echo "source ~/.zshrc"
+    exit 0
     ;;
   -p|--coord-path)
     # allows to specify COORD_DIR starting with "-"
@@ -234,7 +241,7 @@ hc_helm_command() {
     echo "helm $helm_command $(helm_args "${helm_command}") $VALUES_ARGS $*"
 } 
 
-echo "helm-coord mode: $mode"
+>&2 echo "helm-coord mode: $mode"
 case "$mode" in
     printcmd) 
       # change directory to resolve relative chart folders
