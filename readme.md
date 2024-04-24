@@ -65,6 +65,10 @@ Example:
 
 * `./hc.sh -d 2 my/folder/environment/prod -e install`
 
+### Run the script from any location
+
+* `./hc.sh --add-to-path-cmd` - prints the commands needed for adding hc.sh to bashrc
+
 ## Tutorial
 Assumes you have a working default kubeconfig. Will install the example 
 chart into two namespaces.
@@ -106,7 +110,7 @@ helm list -n hc-testing-test
 kubectl get pods -n hc-testing-test
 
 # diff the template output from two coordinates
-./hc.sh -d 2 examples/coord-files/environments/test diff-coord examples/coord-files/environments/prod
+./hc.sh -d 2 --diff examples/coord-files/environments/test examples/coord-files/environments/prod
 
 # install Helm diff to try diffing a installed release
 # see installation instructions: https://github.com/databus23/helm-diff
